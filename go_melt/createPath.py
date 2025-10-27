@@ -31,23 +31,31 @@ def parsingGcode(Nonmesh, Properties, L2h):
     LCC = []
     current_z = None  # Default z-coordinate is 0.0
     skip_segment = 0.0
+    is_g0_move = 0.0  # Track if this is a G0 (rapid move) command
     move_mesh = 0
 
     for current_match in matches:
-        if current_match[0] != "1":  # command found, skip the segment
+        if current_match[0] != "1":  # G0 command found, skip the segment
             skip_segment = 1.0
+            is_g0_move = 1.0 if current_match[0] == "0" else 0.0  # Mark as G0 move
             if current_match[3]:  # Z-coordinate for the layer
                 current_z = float(current_match[3])
             x, y, z = float(current_match[1]), float(current_match[2]), current_z
-            LCC.append((x, y, z, skip_segment))
-        else:  # X and Y coordinates
+            LCC.append((x, y, z, skip_segment, is_g0_move))
+        else:  # G1 X and Y coordinates
             if current_match[3]:  # Z-coordinate for the layer
                 current_z = float(current_match[3])
             x, y, z = float(current_match[1]), float(current_match[2]), current_z
-            LCC.append((x, y, z, skip_segment))
+            LCC.append((x, y, z, skip_segment, is_g0_move))
         skip_segment = 0.0
+        is_g0_move = 0.0
 
     dx = Nonmesh["laser_velocity"] * Nonmesh["timestep_L3"]
+    
+    # Get G0 velocity (for rapid moves/dwell between tracks)
+    # If not specified, use the same velocity as laser_velocity (original behavior)
+    g0_velocity = Nonmesh.get("g0_velocity", Nonmesh["laser_velocity"])
+    dx_g0 = g0_velocity * Nonmesh["timestep_L3"]
 
     # Calculating segments length and generating toolpath
     with open(Nonmesh["toolpath"], "w") as toolpath:
@@ -106,20 +114,24 @@ def parsingGcode(Nonmesh, Properties, L2h):
             if LCC[i + 1][3] == 1:
                 Ljump = 0
 
+            # Determine which velocity to use based on move type
+            current_velocity = g0_velocity if LCC[i + 1][4] == 1 else Nonmesh["laser_velocity"]
+            current_dx = dx_g0 if LCC[i + 1][4] == 1 else dx
+
             distance_of_points = np.linalg.norm(
                 np.array([LCC[i + 1][0] - LCC[i][0], LCC[i + 1][1] - LCC[i][1]])
             )
-            num_pointsinSegments = int(distance_of_points // dx)
-            shortdt = (distance_of_points % dx) / dx * Nonmesh["timestep_L3"]
+            num_pointsinSegments = int(distance_of_points // current_dx)
+            shortdt = (distance_of_points % current_dx) / current_dx * Nonmesh["timestep_L3"]
             new_x = LCC[i][0]
             new_y = LCC[i][1]
             dx_segment = (
-                Nonmesh["laser_velocity"]
+                current_velocity
                 * (LCC[i + 1][0] - LCC[i][0])
                 / distance_of_points
             )
             dy_segment = (
-                Nonmesh["laser_velocity"]
+                current_velocity
                 * (LCC[i + 1][1] - LCC[i][1])
                 / distance_of_points
             )
@@ -136,12 +148,12 @@ def parsingGcode(Nonmesh, Properties, L2h):
                 move_mesh += 1
             if shortdt > 0:
                 dx_segment = (
-                    Nonmesh["laser_velocity"]
+                    current_velocity
                     * (LCC[i + 1][0] - LCC[i][0])
                     / distance_of_points
                 )
                 dy_segment = (
-                    Nonmesh["laser_velocity"]
+                    current_velocity
                     * (LCC[i + 1][1] - LCC[i][1])
                     / distance_of_points
                 )
