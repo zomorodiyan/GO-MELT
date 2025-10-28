@@ -42,12 +42,12 @@
         ],
         "bounds": {
             "x": [
-                0,
-                4
+                0.6,
+                4.6
             ],
             "y": [
-                0,
-                4
+                0.6,
+                4.6
             ],
             "z": [
                 -0.4,
@@ -63,12 +63,12 @@
         ],
         "bounds": {
             "x": [
-                1.0,
-                3.0
+                1.6,
+                3.6
             ],
             "y": [
-                1.0,
-                3.0
+                1.6,
+                3.6
             ],
             "z": [
                 -0.2,
@@ -78,8 +78,8 @@
     },
     "properties": {
         "laser_center": [
-            2.0,
-            2.0,
+            2.58,
+            2.58,
             0.0,
             0,
             0,
@@ -114,10 +114,10 @@
         "record_step": 25,
         "Level1_record_step": 1,
         "laser_velocity": 1000,
-        "g0_velocity": 50,
-        "save_path": "./results/square_g0_test/",
-        "gcode": "./examples/gcodefiles/square_tracks.gcode",
-        "toolpath": "./results/square_g0_test/toolpath.txt",
+        "g0_velocity": 22,
+        "save_path": "./results/square_corrected/",
+        "gcode": "./examples/gcodefiles/square_tracks_corrected.gcode",
+        "toolpath": "./results/square_corrected/toolpath.txt",
         "layer_num": 0,
         "subcycle_num_L2": 5,
         "subcycle_num_L3": 5,
