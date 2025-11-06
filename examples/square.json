@@ -21,16 +21,16 @@
         },
         "conditions": {
             "x": [
-                298.15,
-                298.15
+                295.15,
+                295.15
             ],
             "y": [
-                298.15,
-                298.15
+                295.15,
+                295.15
             ],
             "z": [
-                298.15,
-                298.15
+                295.15,
+                295.15
             ]
         }
     },
@@ -95,11 +95,11 @@
         "heat_capacity_mushy": 750.0,
         "heat_capacity_fluid": 750.0,
         "density": 8.19e-06,
-        "laser_radius": 0.1,
+        "laser_radius": 0.036,
         "laser_depth": 0.1,
         "laser_power": 285.0,
         "laser_absorptivity": 0.35,
-        "T_amb": 298.15,
+        "T_amb": 295.15,
         "T_solidus": 1533.0,
         "T_liquidus": 1609.0,
         "T_boiling": 3185.0,
@@ -118,7 +118,7 @@
         "output_files": 1,
         "record_step": 25,
         "Level1_record_step": 1,
-        "laser_velocity": 1000,
+        "laser_velocity": 960,
         "g0_velocity": 22,
         "save_path": "./results/square-slow/",
         "gcode": "./examples/gcodefiles/square_tracks.gcode",
