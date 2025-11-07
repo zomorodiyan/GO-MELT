@@ -9,6 +9,7 @@ import jax.numpy as jnp
 import numpy as np
 from computeFunctions import *
 from createPath import parsingGcode, count_lines
+from metrics_tracker import MetricsTracker
 import gc
 import json
 
@@ -20,6 +21,13 @@ def go_melt(solver_input: dict):
     Thermal solves using the GO-MELT algorithm are then used.
     """
     tstart = time.time()  # Start timer
+
+    # Initialize performance metrics tracker
+    metrics_tracker = MetricsTracker(
+        solver_input=solver_input,
+        save_path=solver_input.get("nonmesh", {}).get("save_path", "./results/"),
+        warmup_steps=100
+    )
 
     level_names = ["L1", "L2", "L3"]
 
@@ -82,6 +90,9 @@ def go_melt(solver_input: dict):
     t_output = 0.0
     savenum = int(time_inc / Nonmesh["record_step"]) + 1
     saveResults(Levels, Nonmesh, savenum)
+
+    # Initialize metrics tracker with mesh data
+    metrics_tracker.initialize(Levels)
 
     # -------------------------------
     # Layer Tracking & Accumulation
@@ -463,6 +474,9 @@ def go_melt(solver_input: dict):
         # -----------------------------------
         t_output += laser_all[:, 5].sum()
 
+        # Update metrics tracker
+        metrics_tracker.update_step(time_inc, t_loop)
+
         # Save results if record step reached
         if record_inc >= Nonmesh["record_step"]:
             record_inc = 0
@@ -496,6 +510,10 @@ def go_melt(solver_input: dict):
     # Finalization
     # -----------------------------------
     tool_path_file.close()
+
+    # Finalize and save performance metrics
+    metrics_tracker.finalize()
+    metrics_tracker.save_metrics()
 
     # Save final Level 0 state and temperature fields
     saveState(Levels[0], "Level0_", Nonmesh["layer_num"], Nonmesh["save_path"], 0)
