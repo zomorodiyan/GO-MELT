@@ -1,0 +1,75 @@
+COMPLETE SETUP PROCESS FOR GO-MELT ON BLACKWELL GPU (WSL2)
+
+1. UPDATE WINDOWS NVIDIA DRIVER
+   - Download driver 580+ from nvidia.com for RTX 6000 Blackwell
+   - Install with "Clean installation" option
+   - Restart Windows
+
+2. CONFIGURE WSL2 RESOURCE LIMITS
+   - In Windows PowerShell, run:
+     notepad $env:USERPROFILE\.wslconfig
+   
+   - Add this content:
+     [wsl2]
+     memory=96GB
+     processors=72
+     swap=32GB
+     localhostForwarding=true
+   
+   - Save and close, then in PowerShell run:
+     wsl --shutdown
+   
+   - Wait 10 seconds, restart WSL2
+
+3. INSTALL DOCKER DESKTOP
+   - Download from docker.com
+   - Install Docker Desktop for Windows
+   - Open Docker Desktop Settings:
+     * Enable "Use WSL 2 based engine"
+     * Go to Resources → WSL Integration
+     * Enable integration for your Ubuntu distro
+   - Restart Windows
+
+4. INSTALL NVIDIA CONTAINER TOOLKIT (in WSL2/Ubuntu)
+   curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+   
+   curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+     sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+     sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+   
+   sudo apt-get update
+   sudo apt-get install -y nvidia-container-toolkit
+   sudo nvidia-ctk runtime configure --runtime=docker
+   
+   - Restart Docker Desktop in Windows
+
+5. VERIFY GPU ACCESS IN DOCKER
+   docker run --rm --gpus all nvidia/cuda:12.6.0-base-ubuntu22.04 nvidia-smi
+
+6. BUILD GO-MELT DOCKER IMAGE
+   cd ~/bin/GO-MELT
+   
+   cat > Dockerfile << 'EOF'
+   FROM nvcr.io/nvidia/pytorch:24.10-py3
+   WORKDIR /workspace
+   RUN pip install --no-cache-dir \
+       "jax[cuda12]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html \
+       pyevtk dill
+   CMD ["/bin/bash"]
+   EOF
+   
+   docker build -t go-melt:latest .
+
+7. CREATE CONVENIENCE ALIAS
+   echo 'alias go-melt-docker="docker run --gpus all -it --rm --shm-size=80g --ulimit memlock=-1 --ulimit stack=67108864 --ipc=host --cpus=72 --memory=90g -v \$(pwd):/workspace -w /workspace go-melt:latest"' >> ~/.bashrc
+   source ~/.bashrc
+
+8. RUN GO-MELT
+   cd ~/bin/GO-MELT
+   go-melt-docker
+   
+   # Inside container:
+   python go_melt/go_melt.py examples/example.json
+
+9. MONITOR RESOURCES (optional, in separate WSL2 terminal)
+   watch -n 1 'docker stats --no-stream; echo ""; nvidia-smi'
