@@ -1,0 +1,134 @@
+{
+    "Level1": {
+        "elements": [
+            100,
+            40,
+            60
+        ],
+        "bounds": {
+            "x": [
+                0,
+                10
+            ],
+            "y": [
+                0,
+                4
+            ],
+            "z": [
+                -4,
+                2.0
+            ]
+        },
+        "conditions": {
+            "x": [
+                295.15,
+                295.15
+            ],
+            "y": [
+                295.15,
+                295.15
+            ],
+            "z": [
+                295.15,
+                295.15
+            ]
+        }
+    },
+    "Level2": {
+        "elements": [
+            200,
+            200,
+            20
+        ],
+        "bounds": {
+            "x": [
+                0,
+                4
+            ],
+            "y": [
+                0,
+                4
+            ],
+            "z": [
+                -0.4,
+                0.0
+            ]
+        }
+    },
+    "Level3": {
+        "elements": [
+            200,
+            200,
+            20
+        ],
+        "bounds": {
+            "x": [
+                1.0,
+                3.0
+            ],
+            "y": [
+                1.0,
+                3.0
+            ],
+            "z": [
+                -0.2,
+                0.0
+            ]
+        }
+    },
+    "properties": {
+        "laser_center": [
+            2.0,
+            2.0,
+            0.0,
+            0,
+            0,
+            0,
+            0
+        ],
+        "thermal_conductivity_powder": 0.5,
+        "thermal_conductivity_bulk_a0": 11.4,
+        "thermal_conductivity_bulk_a1": 0.0134,
+        "thermal_conductivity_fluid_a0": 33.0,
+        "heat_capacity_solid_a0": 435.0,
+        "heat_capacity_solid_a1": 0.368,
+        "heat_capacity_mushy": 750.0,
+        "heat_capacity_fluid": 750.0,
+        "density": 8.19e-06,
+        "laser_radius": 0.036,
+        "laser_depth": 0.1,
+        "laser_power": 285.0,
+        "laser_absorptivity": 0.35,
+        "T_amb": 295.15,
+        "T_solidus": 1533.0,
+        "T_liquidus": 1609.0,
+        "T_boiling": 3185.0,
+        "h_conv": 1.5e-05,
+        "emissivity": 0.87,
+        "evaporation_coefficient": 0.82,
+        "boltzmann_constant": 1.38e-23,
+        "atomic_mass": 9.746e-26,
+        "latent_heat_evap": 6457000.0,
+        "layer_height": 0.04
+    },
+    "nonmesh": {
+        "timestep_L3": 0.25e-05,
+        "dwell_time": 1.0,
+        "wait_time": 200,
+        "output_files": 1,
+        "record_step": 100,
+        "Level1_record_step": 1,
+        "laser_velocity": 960,
+        "g0_velocity": 22,
+        "save_path": "./results/2x2x2single_track/",
+        "gcode": "./examples/gcodefiles/single_track.gcode",
+        "toolpath": "./results/2x2x2single_track/toolpath.txt",
+        "layer_num": 0,
+        "subcycle_num_L2": 5,
+        "subcycle_num_L3": 5,
+        "info_T": 1,
+        "dwell_time_multiplier": 8,
+        "use_txt": 0
+    }
+}
+
