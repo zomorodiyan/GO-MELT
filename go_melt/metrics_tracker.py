@@ -99,8 +99,16 @@ class MetricsTracker:
         
         self.mesh_stats['level_4_node_count_heat_source'] = num_elements_L3 * 8
         
-        # Total node count (Level 0 is the base substrate mesh)
-        self.mesh_stats['total_node_count'] = int(Levels[0].get('nn', 0))
+        # Total computational node count (sum of Levels 1, 2, 3 - excludes Level 0 background mesh)
+        # Level 0 is substrate state tracking, not part of thermal computation
+        self.mesh_stats['total_node_count'] = (
+            self.mesh_stats['level_1_node_count'] + 
+            self.mesh_stats['level_2_node_count'] + 
+            self.mesh_stats['level_3_node_count']
+        )
+        
+        # Also store Level 0 for reference (background/substrate mesh)
+        self.mesh_stats['level_0_node_count'] = int(Levels[0].get('nn', 0))
         
         # Domain size in mm (from Level 1 bounds)
         level1_config = self.solver_input.get('Level1', {})

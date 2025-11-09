@@ -275,6 +275,18 @@ def go_melt(solver_input: dict):
                                 + str(Nonmesh["layer_num"]).zfill(4),
                                 accum_time=accum_time,
                             )
+                            
+                            # Save accumulated melt time as VTR file for ParaView
+                            from pyevtk.hl import gridToVTK
+                            vtkcx = np.array(Levels[0]["node_coords"][0])
+                            vtkcy = np.array(Levels[0]["node_coords"][1])
+                            vtkcz = np.array(Levels[0]["node_coords"][2])
+                            vtkAccumTime = np.array(
+                                accum_time.reshape(Levels[0]["nodes"][2], Levels[0]["nodes"][1], Levels[0]["nodes"][0])
+                            ).transpose((2, 1, 0))
+                            pointData = {"Accumulated_Melt_Time_seconds": vtkAccumTime}
+                            vtkSave = f"{Nonmesh['save_path']}Level0_AccumMeltTime_{str(Nonmesh['layer_num']).zfill(4)}"
+                            gridToVTK(vtkSave, vtkcx, vtkcy, vtkcz, pointData=pointData)
 
                         # Shift Level 0 data down to simulate vertical mesh movement
                         _0nn1 = (
@@ -588,6 +600,18 @@ def go_melt(solver_input: dict):
             Nonmesh["save_path"] + "accum_time" + str(Nonmesh["layer_num"]).zfill(4),
             accum_time=accum_time,
         )
+        
+        # Save accumulated melt time as VTR file for ParaView visualization
+        from pyevtk.hl import gridToVTK
+        vtkcx = np.array(Levels[0]["node_coords"][0])
+        vtkcy = np.array(Levels[0]["node_coords"][1])
+        vtkcz = np.array(Levels[0]["node_coords"][2])
+        vtkAccumTime = np.array(
+            accum_time.reshape(Levels[0]["nodes"][2], Levels[0]["nodes"][1], Levels[0]["nodes"][0])
+        ).transpose((2, 1, 0))
+        pointData = {"Accumulated_Melt_Time_seconds": vtkAccumTime}
+        vtkSave = f"{Nonmesh['save_path']}Level0_AccumMeltTime_{str(Nonmesh['layer_num']).zfill(4)}"
+        gridToVTK(vtkSave, vtkcx, vtkcy, vtkcz, pointData=pointData)
 
     # Clear JAX caches
     try:
