@@ -112,6 +112,11 @@ def go_melt(solver_input: dict):
     # -------------------------------
     force_move = move_vert = new_checkpoint = False
     ongoing_simulation = single_step = True
+    
+    # Track recent timing for laser vs dwell time steps (keep last 100 samples)
+    laser_step_times = []
+    dwell_step_times = []
+    max_timing_samples = 100
 
     # -------------------------------
     # Toolpath File & Checkpointing
@@ -492,9 +497,60 @@ def go_melt(solver_input: dict):
         t_duration = tend - tstart
         t_now = 1000 * (tend - t_loop)
         t_avg = 1000 * t_duration / time_inc
-        execution_time_rem = (
-            ((tend - t_loop) / subcycle[2]) * (total_t_inc - time_inc) / 3600
-        )
+        
+        # Track step times based on execution mode (laser vs dwell)
+        step_time = tend - t_loop
+        
+        if single_step:
+            # Categorize based on same logic simulation uses
+            if wait_inc <= Nonmesh["wait_time"]:
+                laser_step_times.append(step_time)
+                # Keep only recent samples for better estimate
+                if len(laser_step_times) > max_timing_samples:
+                    laser_step_times.pop(0)
+            else:
+                dwell_step_times.append(step_time)
+                if len(dwell_step_times) > max_timing_samples:
+                    dwell_step_times.pop(0)
+        else:
+            # Subcycling always uses full GO-MELT
+            per_step_time = step_time / t_add
+            for _ in range(t_add):
+                laser_step_times.append(per_step_time)
+                if len(laser_step_times) > max_timing_samples:
+                    laser_step_times.pop(0)
+        
+        # Calculate improved time estimate
+        remaining_steps = total_t_inc - time_inc
+        
+        if len(dwell_step_times) > 0:
+            # We have dwell data - use separate estimates
+            avg_laser_time = sum(laser_step_times) / len(laser_step_times) if laser_step_times else step_time
+            avg_dwell_time = sum(dwell_step_times) / len(dwell_step_times)
+            
+            # Estimate remaining dwell vs laser steps
+            if wait_inc > Nonmesh["wait_time"]:
+                # Currently in dwell - all remaining are dwell
+                estimated_dwell_steps = remaining_steps
+                estimated_laser_steps = 0
+            else:
+                # Estimate dwell steps at end
+                estimated_dwell_steps = min(Nonmesh["wait_time"], remaining_steps)
+                estimated_laser_steps = max(0, remaining_steps - estimated_dwell_steps)
+            
+            execution_time_rem = (
+                (avg_laser_time * estimated_laser_steps + 
+                 avg_dwell_time * estimated_dwell_steps) / 3600
+            )
+        else:
+            # No dwell data yet - use current average
+            if laser_step_times:
+                avg_time = sum(laser_step_times) / len(laser_step_times)
+                execution_time_rem = (avg_time * remaining_steps) / 3600
+            else:
+                execution_time_rem = (
+                    ((tend - t_loop) / subcycle[2]) * remaining_steps / 3600
+                )
 
         print(
             "%d/%d, Real: %.6f s, Wall: %.2f s, Loop: %5.2f ms, Avg: %5.2f ms/dt"
