@@ -3669,16 +3669,16 @@ def saveResults(Levels, Nonmesh, savenum):
     Save temperature results for Levels 1-3 based on save frequency and flags.
     """
     if Nonmesh["output_files"] == 1:
-        if savenum == 1 or (
-            np.mod(savenum, Nonmesh["Level1_record_step"]) == 1
-            or Nonmesh["Level1_record_step"] == 1
-        ):
-            saveResult(Levels[1], "Level1_", savenum, Nonmesh["save_path"], 2e-3)
-            # saveState(Levels[0], "Level0_", savenum, Nonmesh["save_path"], 0)
+        # if savenum == 1 or (
+        #     np.mod(savenum, Nonmesh["Level1_record_step"]) == 1
+        #     or Nonmesh["Level1_record_step"] == 1
+        # ):
+        #     saveResult(Levels[1], "Level1_", savenum, Nonmesh["save_path"], 2e-3)
+        #     # saveState(Levels[0], "Level0_", savenum, Nonmesh["save_path"], 0)
 
-        saveResult(Levels[2], "Level2_", savenum, Nonmesh["save_path"], 1e-3)
+        # saveResult(Levels[2], "Level2_", savenum, Nonmesh["save_path"], 1e-3)
         saveResult(Levels[3], "Level3_", savenum, Nonmesh["save_path"], 0)
-        print(f"Saved Levels_{savenum:08}")
+        print(f"Saved Level3_{savenum:08}")
 
 
 def saveResultsFinal(Levels, Nonmesh):
