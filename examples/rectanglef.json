@@ -1,14 +1,14 @@
 {
     "Level1": {
         "elements": [
-            50,
+            30,
             50,
             30
         ],
         "bounds": {
             "x": [
                 0,
-                10
+                6
             ],
             "y": [
                 0,
@@ -119,10 +119,10 @@
         "record_step": 25,
         "Level1_record_step": 1,
         "laser_velocity": 960,
-        "g0_velocity": 22,
-        "save_path": "./results/square-slow/",
-        "gcode": "./examples/gcodefiles/square_tracks.gcode",
-        "toolpath": "./results/square-slow/toolpath.txt",
+        "g0_velocity": 146.66667,
+        "save_path": "./results/rectangle-slow/",
+        "gcode": "./examples/gcodefiles/rectangle_tracks.gcode",
+        "toolpath": "./results/rectangle-slow/toolpath.txt",
         "layer_num": 0,
         "subcycle_num_L2": 5,
         "subcycle_num_L3": 5,

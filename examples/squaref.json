@@ -119,7 +119,7 @@
         "record_step": 25,
         "Level1_record_step": 1,
         "laser_velocity": 960,
-        "g0_velocity": 22,
+        "g0_velocity": 146.66667,
         "save_path": "./results/square-slow/",
         "gcode": "./examples/gcodefiles/square_tracks.gcode",
         "toolpath": "./results/square-slow/toolpath.txt",
