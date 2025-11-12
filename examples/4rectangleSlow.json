@@ -1,9 +1,9 @@
 {
     "Level1": {
         "elements": [
-            60,
-            100,
-            60
+            120,
+            200,
+            120
         ],
         "bounds": {
             "x": [
@@ -112,17 +112,17 @@
         "layer_height": 0.04
     },
     "nonmesh": {
-        "timestep_L3": 0.25e-05,
+        "timestep_L3": 0.625e-06,
         "dwell_time": 1.0,
         "wait_time": 200,
         "output_files": 1,
-        "record_step": 100,
+        "record_step": 400,
         "Level1_record_step": 1,
         "laser_velocity": 960,
         "g0_velocity": 22,
-        "save_path": "./results/2rectangleSlow/",
+        "save_path": "./results/4rectangleSlow/",
         "gcode": "./examples/gcodefiles/rectangle_tracks.gcode",
-        "toolpath": "./results/2rectangleSlow/toolpath.txt",
+        "toolpath": "./results/4rectangleSlow/toolpath.txt",
         "layer_num": 0,
         "subcycle_num_L2": 5,
         "subcycle_num_L3": 5,

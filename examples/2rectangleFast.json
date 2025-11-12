@@ -1,9 +1,9 @@
 {
     "Level1": {
         "elements": [
-            30,
-            50,
-            30
+            60,
+            100,
+            60
         ],
         "bounds": {
             "x": [
@@ -36,9 +36,9 @@
     },
     "Level2": {
         "elements": [
-            100,
-            100,
-            10
+            200,
+            200,
+            20
         ],
         "bounds": {
             "x": [
@@ -57,9 +57,9 @@
     },
     "Level3": {
         "elements": [
-            100,
-            100,
-            10
+            200,
+            200,
+            20
         ],
         "bounds": {
             "x": [
@@ -120,9 +120,9 @@
         "Level1_record_step": 1,
         "laser_velocity": 960,
         "g0_velocity": 146.66667,
-        "save_path": "./results/2x2x2rectangle-fast/",
+        "save_path": "./results/2rectangleFast/",
         "gcode": "./examples/gcodefiles/rectangle_tracks.gcode",
-        "toolpath": "./results/2x2x2rectangle-fast/toolpath.txt",
+        "toolpath": "./results/2rectangleFast/toolpath.txt",
         "layer_num": 0,
         "subcycle_num_L2": 5,
         "subcycle_num_L3": 5,
