@@ -21,11 +21,12 @@ dt = 0.25e-5                     # time step [s]
 tol_z = 1e-12                    # tolerance for z = 0 plane
 
 # Set to None to process ALL files, or to an int to limit for testing
-max_files = 1000
+max_files = None
 
 output_npy_TAM    = "max_time_above_melt_2D.npy"
 output_npy_SCR    = "solidus_cooling_rate_2D.npy"
 output_npy_params = "surface_grid_params.npy"
+output_txt_stats  = "TAM_SCR_statistics.txt"
 output_png_TAM    = "TAM_surface.png"
 output_png_SCR    = "SCR_surface.png"
 # ----------------------------------------------------------
@@ -306,6 +307,71 @@ print(f"  Had TAM but never reached 1533K: {num_case2} nodes (SCR = {min_observe
 print(f"  Never experienced TAM: {num_no_tam} nodes (SCR = -1e7)")
 
 # ----------------------------------------------------------
+# Compute statistics for TAM and SCR
+# ----------------------------------------------------------
+print("\n=== Computing TAM and SCR Statistics ===")
+
+# TAM statistics (only values > 0)
+tam_positive = max_time[max_time > 0]
+if len(tam_positive) > 0:
+    tam_mean = np.mean(tam_positive)
+    tam_median = np.median(tam_positive)
+    tam_std = np.std(tam_positive)
+    print(f"\nTAM Statistics (values > 0):")
+    print(f"  Mean:   {tam_mean:.6e} s")
+    print(f"  Median: {tam_median:.6e} s")
+    print(f"  Std:    {tam_std:.6e} s")
+else:
+    tam_mean = tam_median = tam_std = 0.0
+    print("\nNo positive TAM values found")
+
+# SCR statistics (only values > 0)
+scr_positive = scr_array[scr_array > 0]
+if len(scr_positive) > 0:
+    scr_mean = np.mean(scr_positive)
+    scr_median = np.median(scr_positive)
+    scr_std = np.std(scr_positive)
+    print(f"\nSCR Statistics (values > 0):")
+    print(f"  Mean:   {scr_mean:.6e} K/s")
+    print(f"  Median: {scr_median:.6e} K/s")
+    print(f"  Std:    {scr_std:.6e} K/s")
+else:
+    scr_mean = scr_median = scr_std = 0.0
+    print("\nNo positive SCR values found")
+
+# Save statistics to text file
+with open(output_txt_stats, 'w') as f:
+    f.write("TAM and SCR Statistics\n")
+    f.write("=" * 60 + "\n\n")
+    
+    f.write("TAM (Time Above Melt) Statistics (values > 0):\n")
+    f.write("-" * 60 + "\n")
+    f.write(f"  Mean:         {tam_mean:.6e} s\n")
+    f.write(f"  Median:       {tam_median:.6e} s\n")
+    f.write(f"  Std Dev:      {tam_std:.6e} s\n")
+    f.write(f"  Node Count:   {len(tam_positive)}\n")
+    f.write(f"  Total Nodes:  {Nx_global * Ny_global}\n\n")
+    
+    f.write("SCR (Solidus Cooling Rate) Statistics (values > 0):\n")
+    f.write("-" * 60 + "\n")
+    f.write(f"  Mean:         {scr_mean:.6e} K/s\n")
+    f.write(f"  Median:       {scr_median:.6e} K/s\n")
+    f.write(f"  Std Dev:      {scr_std:.6e} K/s\n")
+    f.write(f"  Node Count:   {len(scr_positive)}\n")
+    f.write(f"  Total Nodes:  {Nx_global * Ny_global}\n\n")
+    f.write("SCR Node Counts by Case:\n")
+    f.write("-" * 60 + "\n")
+    f.write(f"  Valid SCR (1533K→1423K): {num_valid}\n")
+    f.write(f"  Had TAM, never reached 1533K (min/1.2): {num_case2}\n")
+    f.write(f"  Reached 1533K, never reached 1423K (min/1.5): {num_case1}\n")
+    f.write(f"  Never experienced TAM (-1e7): {num_no_tam}\n\n")
+    f.write("=" * 60 + "\n")
+    f.write(f"Data Directory: {data_dir}\n")
+    f.write(f"Melt Temperature: {melt_T} K\n")
+    f.write(f"Solidus Temperature: {T_solidus} K\n")
+    f.write(f"Solidus Low Temperature: {T_solidus_low} K\n")
+
+# ----------------------------------------------------------
 # Save arrays
 # ----------------------------------------------------------
 np.save(output_npy_TAM, max_time.astype(np.float32))
@@ -319,6 +385,7 @@ print("\nSaved:")
 print(f"  {output_npy_TAM}")
 print(f"  {output_npy_SCR}")
 print(f"  {output_npy_params}")
+print(f"  {output_txt_stats}")
 
 # ----------------------------------------------------------
 # Save PNGs
