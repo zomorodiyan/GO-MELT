@@ -1,0 +1,163 @@
+======================================================================
+PMPG (Pad Melt Pool Geometry) Analysis Results
+======================================================================
+
+SUMMARY STATISTICS
+----------------------------------------------------------------------
+Average Depth (Valley):        126.15 μm
+Average Overlap Depth (Peak):  110.21 μm
+Average Track Width:           183.03 μm
+
+======================================================================
+
+DETAILED DATA: Valley Depths (μm)
+----------------------------------------------------------------------
+Valley   1:    112.20 μm
+Valley   2:    112.69 μm
+Valley   3:    123.57 μm
+Valley   4:    120.93 μm
+Valley   5:    126.17 μm
+Valley   6:    119.22 μm
+Valley   7:    129.41 μm
+Valley   8:    122.74 μm
+Valley   9:    129.41 μm
+Valley  10:    123.01 μm
+Valley  11:    130.08 μm
+Valley  12:    122.74 μm
+Valley  13:    130.06 μm
+Valley  14:    123.28 μm
+Valley  15:    132.08 μm
+Valley  16:    123.01 μm
+Valley  17:    130.07 μm
+Valley  18:    123.37 μm
+Valley  19:    132.73 μm
+Valley  20:    123.01 μm
+Valley  21:    132.08 μm
+Valley  22:    123.10 μm
+Valley  23:    130.06 μm
+Valley  24:    123.29 μm
+Valley  25:    132.73 μm
+Valley  26:    123.01 μm
+Valley  27:    132.08 μm
+Valley  28:    123.37 μm
+Valley  29:    130.08 μm
+Valley  30:    123.29 μm
+Valley  31:    132.73 μm
+Valley  32:    122.74 μm
+Valley  33:    130.07 μm
+Valley  34:    123.37 μm
+Valley  35:    132.08 μm
+Valley  36:    123.29 μm
+Valley  37:    132.73 μm
+Valley  38:    122.74 μm
+Valley  39:    130.07 μm
+Valley  40:    123.37 μm
+Valley  41:    132.08 μm
+Valley  42:    123.01 μm
+Valley  43:    132.08 μm
+Valley  44:    123.37 μm
+Valley  45:    130.08 μm
+
+======================================================================
+
+DETAILED DATA: Peak Depths / Overlap Depths (μm)
+----------------------------------------------------------------------
+Peak   1:     89.44 μm
+Peak   2:    103.90 μm
+Peak   3:    101.41 μm
+Peak   4:    111.75 μm
+Peak   5:    104.76 μm
+Peak   6:    113.14 μm
+Peak   7:    105.07 μm
+Peak   8:    113.88 μm
+Peak   9:    105.07 μm
+Peak  10:    115.87 μm
+Peak  11:    105.34 μm
+Peak  12:    113.88 μm
+Peak  13:    107.10 μm
+Peak  14:    115.90 μm
+Peak  15:    107.11 μm
+Peak  16:    113.88 μm
+Peak  17:    109.10 μm
+Peak  18:    116.54 μm
+Peak  19:    105.35 μm
+Peak  20:    115.90 μm
+Peak  21:    109.10 μm
+Peak  22:    113.88 μm
+Peak  23:    107.10 μm
+Peak  24:    116.54 μm
+Peak  25:    105.35 μm
+Peak  26:    115.90 μm
+Peak  27:    109.10 μm
+Peak  28:    115.87 μm
+Peak  29:    107.10 μm
+Peak  30:    116.54 μm
+Peak  31:    105.35 μm
+Peak  32:    113.88 μm
+Peak  33:    109.10 μm
+Peak  34:    115.90 μm
+Peak  35:    107.11 μm
+Peak  36:    116.54 μm
+Peak  37:    105.35 μm
+Peak  38:    113.88 μm
+Peak  39:    109.10 μm
+Peak  40:    115.90 μm
+Peak  41:    105.35 μm
+Peak  42:    115.90 μm
+Peak  43:    109.10 μm
+Peak  44:    115.87 μm
+
+======================================================================
+
+DETAILED DATA: Track Widths (μm)
+----------------------------------------------------------------------
+Track   1:    134.66 μm
+Track   2:    141.95 μm
+Track   3:    185.04 μm
+Track   4:    152.87 μm
+Track   5:    199.68 μm
+Track   6:    153.35 μm
+Track   7:    202.77 μm
+Track   8:    159.68 μm
+Track   9:    205.24 μm
+Track  10:    160.84 μm
+Track  11:    210.93 μm
+Track  12:    158.49 μm
+Track  13:    209.11 μm
+Track  14:    161.41 μm
+Track  15:    212.03 μm
+Track  16:    161.98 μm
+Track  17:    208.98 μm
+Track  18:    163.54 μm
+Track  19:    212.41 μm
+Track  20:    160.60 μm
+Track  21:    211.49 μm
+Track  22:    162.42 μm
+Track  23:    208.06 μm
+Track  24:    161.97 μm
+Track  25:    211.24 μm
+Track  26:    160.60 μm
+Track  27:    211.84 μm
+Track  28:    163.75 μm
+Track  29:    208.74 μm
+Track  30:    162.02 μm
+Track  31:    211.64 μm
+Track  32:    160.48 μm
+Track  33:    208.49 μm
+Track  34:    163.67 μm
+Track  35:    210.68 μm
+Track  36:    162.43 μm
+Track  37:    212.69 μm
+Track  38:    160.83 μm
+Track  39:    209.06 μm
+Track  40:    163.30 μm
+Track  41:    210.40 μm
+Track  42:    159.24 μm
+Track  43:    211.28 μm
+Track  44:    163.41 μm
+Track  45:    211.03 μm
+
+======================================================================
+Cross-section location: X = 2.960 mm
+Data directory: results/2squareFast
+======================================================================
