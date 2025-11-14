@@ -21,7 +21,7 @@ dt = 0.25e-5                     # time step [s]
 tol_z = 1e-12                    # tolerance for z = 0 plane
 
 # Set to None to process ALL files, or to an int to limit for testing
-max_files = None
+max_files = None 
 
 output_npy_TAM    = "max_time_above_melt_2D.npy"
 output_npy_SCR    = "solidus_cooling_rate_2D.npy"
@@ -192,22 +192,20 @@ else:
 cum_time = np.cumsum(dt_array)
 print(f"Loaded {n_tool_steps} toolpath steps, aggregated to {len(dt_array)} VTR frames. Total simulated time: {cum_time[-1]:.6e} s")
 
-# Arrays for TAM computation
-best_run    = np.zeros((Ny_global, Nx_global), dtype=np.int32)
-current_run = np.zeros((Ny_global, Nx_global), dtype=np.int32)
-hot         = np.zeros((Ny_global, Nx_global), dtype=bool)
-# Track start and end indices of longest TAM streak for each node
-best_run_start = np.full((Ny_global, Nx_global), -1, dtype=np.int32)
-best_run_end   = np.full((Ny_global, Nx_global), -1, dtype=np.int32)
+# Arrays for interpolation-based TAM and SCR computation
+prev_temp       = np.full((Ny_global, Nx_global), -1.0, dtype=np.float32)  # Previous temperature
+in_melt_zone    = np.zeros((Ny_global, Nx_global), dtype=bool)              # Currently above melt_T
+melt_entry_time = np.full((Ny_global, Nx_global), -1.0, dtype=np.float32)   # Time when entered current melt zone
+current_tam     = np.zeros((Ny_global, Nx_global), dtype=np.float32)        # TAM for current melt episode
+best_tam        = np.zeros((Ny_global, Nx_global), dtype=np.float32)        # Best (longest) TAM so far
 
 # Arrays for SCR computation
-tam_end_time    = np.full((Ny_global, Nx_global), -1, dtype=np.int32)  # When best TAM ended
-in_cooling      = np.zeros((Ny_global, Nx_global), dtype=bool)          # Currently in cooling phase after best TAM
-reached_1533    = np.zeros((Ny_global, Nx_global), dtype=bool)          # Reached T_solidus after TAM
-time_at_1533    = np.full((Ny_global, Nx_global), -1, dtype=np.int32)  # Timestep when reached 1533K
-reached_1423    = np.zeros((Ny_global, Nx_global), dtype=bool)          # Reached T_solidus_low after 1533K
-time_at_1423    = np.full((Ny_global, Nx_global), -1, dtype=np.int32)  # Timestep when reached 1423K
-scr_computed    = np.zeros((Ny_global, Nx_global), dtype=bool)          # SCR has been computed for this node
+in_cooling      = np.zeros((Ny_global, Nx_global), dtype=bool)               # Currently in cooling phase after best TAM
+time_at_1533    = np.full((Ny_global, Nx_global), -1.0, dtype=np.float32)   # Interpolated time when crossed 1533K
+time_at_1423    = np.full((Ny_global, Nx_global), -1.0, dtype=np.float32)   # Interpolated time when crossed 1423K
+reached_1533    = np.zeros((Ny_global, Nx_global), dtype=bool)               # Crossed 1533K during cooling
+reached_1423    = np.zeros((Ny_global, Nx_global), dtype=bool)               # Crossed 1423K during cooling
+scr_computed    = np.zeros((Ny_global, Nx_global), dtype=bool)               # SCR has been computed
 
 for t_idx, f in enumerate(files):
     print(f"  [PASS2] timestep {t_idx+1}/{T_global}: {os.path.basename(f)}")
@@ -248,108 +246,110 @@ for t_idx, f in enumerate(files):
     if ix_start < 0 or iy_start < 0 or ix_end > Nx_global or iy_end > Ny_global:
         raise RuntimeError(f"Window out of global bounds for timestep {t_idx}")
 
-    # Clear hot array and set only the current window region
-    hot.fill(False)
-    hot_local = (Tsurf > melt_T)
-    hot[iy_start:iy_end, ix_start:ix_end] = hot_local
-
-    # Update run lengths
-    # where hot: increment, else reset
-    current_run[hot] += 1
+    # Current time at this frame
+    current_time = cum_time[t_idx]
+    dt_current = dt_array[t_idx]
+    prev_time = current_time - dt_current
     
-    # Detect where TAM just ended (was hot, now cooling)
-    just_cooled = (~hot) & (current_run > 0)
-    
-    # Update best_run and track when best TAM ends
-    old_best = best_run.copy()
-    np.maximum(best_run, current_run, out=best_run)
-    # If we just set a new record, mark start and end indices
-    new_record = (best_run > old_best) & just_cooled
-    for j in range(Ny_global):
-        for i in range(Nx_global):
-            if new_record[j, i]:
-                best_run_end[j, i] = t_idx
-                best_run_start[j, i] = t_idx - best_run[j, i] + 1
-
-    # Update best_run and track when best TAM ends
-    old_best = best_run.copy()
-    np.maximum(best_run, current_run, out=best_run)
-    
-    # If we just set a new record, mark this as the TAM end time
-    new_record = (best_run > old_best) & just_cooled
-    tam_end_time[new_record] = t_idx
-    in_cooling[new_record] = True
-    # Reset SCR tracking for nodes with new records
-    reached_1533[new_record] = False
-    reached_1423[new_record] = False
-    time_at_1533[new_record] = -1
-    time_at_1423[new_record] = -1
-    scr_computed[new_record] = False
-    
-    # For nodes that just cooled and matched their best run (even if not a new record)
-    matched_best = (current_run == best_run) & just_cooled
-    if np.any(matched_best):
-        # record best run start/end for these nodes as well
-        idxs = np.where(matched_best)
-        # compute starts: t_idx - best_run + 1
-        starts = t_idx - best_run[idxs] + 1
-        best_run_end[idxs] = t_idx
-        best_run_start[idxs] = starts
-    tam_end_time[matched_best] = t_idx
-    in_cooling[matched_best] = True
-    # Reset SCR tracking
-    reached_1533[matched_best] = False
-    reached_1423[matched_best] = False
-    time_at_1533[matched_best] = -1
-    time_at_1423[matched_best] = -1
-    scr_computed[matched_best] = False
-    
-    # EDGE CASE: If a node re-enters melt zone, reset cooling phase and SCR tracking
-    re_melted = hot & in_cooling
-    in_cooling[re_melted] = False
-    reached_1533[re_melted] = False
-    reached_1423[re_melted] = False
-    time_at_1533[re_melted] = -1
-    time_at_1423[re_melted] = -1
-    # Note: scr_computed stays as-is; we'll only update when we complete a valid cooling cycle
-    
-    # Reset current_run for nodes that are not hot
-    current_run[~hot] = 0
-    
-    # --- SCR tracking for nodes in cooling phase ---
-    # Extract temperature for the current window
-    Tsurf_window = Tsurf  # (Ny_loc, Nx_loc)
-    
-    # Map to global coordinates
-    # We need to work only within the window that has temperature data
+    # Process each node in the window
     for j_loc in range(Ny_loc):
         for i_loc in range(Nx_loc):
             i_global = ix_start + i_loc
             j_global = iy_start + j_loc
             
-            T_current = Tsurf_window[j_loc, i_loc]
+            T_curr = Tsurf[j_loc, i_loc]
+            T_prev = prev_temp[j_global, i_global]
             
-            # Only track SCR if we're in cooling phase and haven't computed SCR yet
-            if in_cooling[j_global, i_global] and not scr_computed[j_global, i_global]:
-                # Check if we've reached 1533K
-                if not reached_1533[j_global, i_global] and T_current <= T_solidus:
-                    reached_1533[j_global, i_global] = True
-                    time_at_1533[j_global, i_global] = t_idx
+            # Skip first frame (no previous temperature)
+            if T_prev < 0:
+                prev_temp[j_global, i_global] = T_curr
+                continue
+            
+            # === TAM TRACKING WITH INTERPOLATION ===
+            was_in_melt = in_melt_zone[j_global, i_global]
+            is_in_melt = (T_curr > melt_T)
+            
+            if not was_in_melt and is_in_melt:
+                # Entered melt zone: interpolate entry time
+                if T_prev < melt_T:
+                    # Crossed threshold during this time step
+                    fraction = (melt_T - T_prev) / (T_curr - T_prev) if T_curr != T_prev else 0.0
+                    entry_time = prev_time + fraction * dt_current
+                else:
+                    # Already above threshold at start
+                    entry_time = prev_time
+                melt_entry_time[j_global, i_global] = entry_time
+                in_melt_zone[j_global, i_global] = True
+                in_cooling[j_global, i_global] = False  # Reset cooling if re-entering
                 
-                # Check if we've reached 1423K (only after reaching 1533K)
-                elif reached_1533[j_global, i_global] and not reached_1423[j_global, i_global] and T_current <= T_solidus_low:
-                    reached_1423[j_global, i_global] = True
-                    time_at_1423[j_global, i_global] = t_idx
-                    scr_computed[j_global, i_global] = True  # Mark as done
+            elif was_in_melt and not is_in_melt:
+                # Exited melt zone: interpolate exit time and accumulate TAM
+                if T_curr < melt_T:
+                    # Crossed threshold during this time step
+                    fraction = (melt_T - T_prev) / (T_curr - T_prev) if T_curr != T_prev else 1.0
+                    exit_time = prev_time + fraction * dt_current
+                else:
+                    # Still above at end (shouldn't happen given is_in_melt check)
+                    exit_time = current_time
+                
+                entry_time = melt_entry_time[j_global, i_global]
+                if entry_time >= 0:
+                    tam_duration = exit_time - entry_time
+                    current_tam[j_global, i_global] = tam_duration
+                    
+                    # Update best TAM if this is the longest
+                    if tam_duration > best_tam[j_global, i_global]:
+                        best_tam[j_global, i_global] = tam_duration
+                        # Start cooling phase for SCR tracking
+                        in_cooling[j_global, i_global] = True
+                        reached_1533[j_global, i_global] = False
+                        reached_1423[j_global, i_global] = False
+                        time_at_1533[j_global, i_global] = -1.0
+                        time_at_1423[j_global, i_global] = -1.0
+                        scr_computed[j_global, i_global] = False
+                
+                in_melt_zone[j_global, i_global] = False
+                melt_entry_time[j_global, i_global] = -1.0
+            
+            elif was_in_melt and is_in_melt:
+                # Still in melt zone: no action needed
+                pass
+            
+            # === SCR TRACKING WITH INTERPOLATION (during cooling) ===
+            if in_cooling[j_global, i_global] and not scr_computed[j_global, i_global]:
+                # Check for 1533K crossing
+                if not reached_1533[j_global, i_global]:
+                    if T_prev > T_solidus and T_curr <= T_solidus:
+                        # Crossed 1533K: interpolate crossing time
+                        fraction = (T_solidus - T_prev) / (T_curr - T_prev) if T_curr != T_prev else 1.0
+                        cross_time = prev_time + fraction * dt_current
+                        time_at_1533[j_global, i_global] = cross_time
+                        reached_1533[j_global, i_global] = True
+                    elif T_curr <= T_solidus:
+                        # Already below at start of this frame
+                        time_at_1533[j_global, i_global] = prev_time
+                        reached_1533[j_global, i_global] = True
+                
+                # Check for 1423K crossing (only after 1533K)
+                if reached_1533[j_global, i_global] and not reached_1423[j_global, i_global]:
+                    if T_prev > T_solidus_low and T_curr <= T_solidus_low:
+                        # Crossed 1423K: interpolate crossing time
+                        fraction = (T_solidus_low - T_prev) / (T_curr - T_prev) if T_curr != T_prev else 1.0
+                        cross_time = prev_time + fraction * dt_current
+                        time_at_1423[j_global, i_global] = cross_time
+                        reached_1423[j_global, i_global] = True
+                        scr_computed[j_global, i_global] = True
+                    elif T_curr <= T_solidus_low:
+                        # Already below at start of this frame
+                        time_at_1423[j_global, i_global] = prev_time
+                        reached_1423[j_global, i_global] = True
+                        scr_computed[j_global, i_global] = True
+            
+            # Update previous temperature
+            prev_temp[j_global, i_global] = T_curr
 
-# Convert runs to time (seconds) using variable dt
-max_time = np.zeros((Ny_global, Nx_global), dtype=np.float32)
-for j in range(Ny_global):
-    for i in range(Nx_global):
-        start = best_run_start[j, i]
-        end = best_run_end[j, i]
-        if start >= 0 and end >= start:
-            max_time[j, i] = np.sum(dt_array[start:end+1])
+# TAM is already computed during the loop (stored in best_tam)
+max_time = best_tam
 
 # Find minimum observed TAM for error value calculation (positive values only)
 tam_positive_values = max_time[max_time > 0]
@@ -376,7 +376,8 @@ for j in range(Ny_global):
             t1 = time_at_1533[j, i]
             t2 = time_at_1423[j, i]
             if t1 >= 0 and t2 > t1:
-                scr_time_diff[j, i] = cum_time[t2] - cum_time[t1]
+                # Use interpolated times directly (already in seconds)
+                scr_time_diff[j, i] = t2 - t1
                 scr_array[j, i] = 110.0 / scr_time_diff[j, i] if scr_time_diff[j, i] > 0 else 0.0
 
 # Find minimum observed SCR for error value calculation
