@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 # ----------------------------------------------------------
 # User parameters
 # ----------------------------------------------------------
-data_dir = "results/2squareFast"   # <-- change this
+data_dir = "results/2squareSlow"   # <-- change this
 melt_T = 1570.0                  # K
 T_solidus = 1533.0               # K
 T_solidus_low = 1423.0           # K (T_solidus - 110)
@@ -509,10 +509,13 @@ plt.imshow(
             y_coords_global[0], y_coords_global[-1]],
     aspect='equal'
 )
-plt.colorbar(label="Max time above melt (s)")
-plt.xlabel("X coordinate")
-plt.ylabel("Y coordinate")
-plt.title("Max-time-above-melt (TAM)")
+plt.colorbar(label="seconds")
+plt.xlabel("x (mm)")
+plt.ylabel("y (mm)")
+plt.title("Longest Time Above Melting (TAM)")
+# Trim 1mm from each side
+plt.xlim(x_coords_global[0] + 1.0, x_coords_global[-1] - 1.0)
+plt.ylim(y_coords_global[0] + 1.0, y_coords_global[-1] - 1.0)
 plt.savefig(output_png_TAM, dpi=300, bbox_inches="tight")
 print(f"Saved PNG: {output_png_TAM}")
 plt.close()
@@ -527,10 +530,13 @@ plt.imshow(
     aspect='equal',
     cmap='viridis'
 )
-plt.colorbar(label="Solidus Cooling Rate (K/s)")
-plt.xlabel("X coordinate")
-plt.ylabel("Y coordinate")
-plt.title("Solidus Cooling Rate (1533K → 1423K)\n(-1e6: No TAM, min_TAM/1.1: No 1533K, min_TAM/1.2: No 1423K)")
+plt.colorbar(label="Kelvin / second")
+plt.xlabel("x (mm)")
+plt.ylabel("y (mm)")
+plt.title("Pad Cooling Rate")
+# Trim 1mm from each side
+plt.xlim(x_coords_global[0] + 1.0, x_coords_global[-1] - 1.0)
+plt.ylim(y_coords_global[0] + 1.0, y_coords_global[-1] - 1.0)
 plt.savefig(output_png_SCR, dpi=300, bbox_inches="tight")
 print(f"Saved PNG: {output_png_SCR}")
 plt.close()
