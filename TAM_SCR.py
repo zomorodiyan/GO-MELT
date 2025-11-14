@@ -26,9 +26,9 @@ max_files = None
 output_npy_TAM    = "max_time_above_melt_2D.npy"
 output_npy_SCR    = "solidus_cooling_rate_2D.npy"
 output_npy_params = "surface_grid_params.npy"
-output_txt_stats  = "TAM_SCR_statistics.txt"
-output_png_TAM    = "TAM_surface.png"
-output_png_SCR    = "SCR_surface.png"
+output_txt_stats  = "statistics_TAM_SCR.txt"
+output_png_TAM    = "surface_TAM.png"
+output_png_SCR    = "surface_SCR.png"
 # ----------------------------------------------------------
 
 # ----------------------------------------------------------
@@ -131,10 +131,74 @@ print(f"  Y range: {min_y} → {max_y}\n")
 # ----------------------------------------------------------
 print("=== PASS 2: streaming through files to compute TAM and SCR ===")
 
+# ----------------------------------------------------------
+# Read toolpath file and build cumulative time array
+# ----------------------------------------------------------
+toolpath_file = os.path.join(data_dir, "toolpath.txt")
+if not os.path.exists(toolpath_file):
+    raise RuntimeError(f"Toolpath file not found: {toolpath_file}")
+
+dt_list = []
+with open(toolpath_file, "r") as f:
+    for line_num, line in enumerate(f, 1):
+        parts = line.strip().split(",")
+        if len(parts) >= 7:
+            try:
+                # dt is in column 5 (0-indexed), which is the 6th column
+                dt_val = float(parts[5])
+                dt_list.append(dt_val)
+            except ValueError as e:
+                print(f"Warning line {line_num}: Could not parse dt from '{parts[5]}': {e}")
+                dt_list.append(dt)
+        else:
+            print(f"Warning line {line_num}: Not enough columns ({len(parts)})")
+            dt_list.append(dt)  # fallback to default if missing
+
+dt_array = np.array(dt_list)
+n_tool_steps = len(dt_array)
+n_vtr_files_total = len(all_files)  # Use total VTR count, not limited subset
+n_vtr_files_processed = len(files)
+
+if n_tool_steps == n_vtr_files_total:
+    # 1:1 mapping
+    dt_array_per_frame = dt_array.copy()
+    print(f"Toolpath steps matches total VTR frames: {n_tool_steps}")
+elif n_tool_steps % n_vtr_files_total == 0:
+    # exact integer grouping (common case: record_step > 1)
+    group = n_tool_steps // n_vtr_files_total
+    dt_array_per_frame = dt_array.reshape((n_vtr_files_total, group)).sum(axis=1)
+    print(f"Aggregated toolpath dt into {n_vtr_files_total} frames by summing groups of {group} steps (toolpath rows per VTR).")
+else:
+    # try best-effort grouping (rounding)
+    approx_group = int(round(n_tool_steps / n_vtr_files_total))
+    if approx_group <= 0:
+        raise RuntimeError("Invalid grouping computed for toolpath/vtr mapping")
+    dt_array_per_frame = np.empty(n_vtr_files_total, dtype=dt_array.dtype)
+    for i in range(n_vtr_files_total):
+        start = i * approx_group
+        end = start + approx_group
+        if i == n_vtr_files_total - 1:
+            end = n_tool_steps
+        dt_array_per_frame[i] = dt_array[start:end].sum()
+    print(f"Warning: toolpath steps ({n_tool_steps}) not divisible by total VTR files ({n_vtr_files_total}).")
+    print(f"Using approx group={approx_group}; last frame may have different count.")
+
+# If processing only a subset, slice the dt array accordingly
+if n_vtr_files_processed < n_vtr_files_total:
+    dt_array = dt_array_per_frame[:n_vtr_files_processed]
+    print(f"Processing subset: using first {n_vtr_files_processed} of {n_vtr_files_total} aggregated dt values.")
+else:
+    dt_array = dt_array_per_frame
+cum_time = np.cumsum(dt_array)
+print(f"Loaded {n_tool_steps} toolpath steps, aggregated to {len(dt_array)} VTR frames. Total simulated time: {cum_time[-1]:.6e} s")
+
 # Arrays for TAM computation
 best_run    = np.zeros((Ny_global, Nx_global), dtype=np.int32)
 current_run = np.zeros((Ny_global, Nx_global), dtype=np.int32)
 hot         = np.zeros((Ny_global, Nx_global), dtype=bool)
+# Track start and end indices of longest TAM streak for each node
+best_run_start = np.full((Ny_global, Nx_global), -1, dtype=np.int32)
+best_run_end   = np.full((Ny_global, Nx_global), -1, dtype=np.int32)
 
 # Arrays for SCR computation
 tam_end_time    = np.full((Ny_global, Nx_global), -1, dtype=np.int32)  # When best TAM ended
@@ -199,6 +263,17 @@ for t_idx, f in enumerate(files):
     # Update best_run and track when best TAM ends
     old_best = best_run.copy()
     np.maximum(best_run, current_run, out=best_run)
+    # If we just set a new record, mark start and end indices
+    new_record = (best_run > old_best) & just_cooled
+    for j in range(Ny_global):
+        for i in range(Nx_global):
+            if new_record[j, i]:
+                best_run_end[j, i] = t_idx
+                best_run_start[j, i] = t_idx - best_run[j, i] + 1
+
+    # Update best_run and track when best TAM ends
+    old_best = best_run.copy()
+    np.maximum(best_run, current_run, out=best_run)
     
     # If we just set a new record, mark this as the TAM end time
     new_record = (best_run > old_best) & just_cooled
@@ -213,6 +288,13 @@ for t_idx, f in enumerate(files):
     
     # For nodes that just cooled and matched their best run (even if not a new record)
     matched_best = (current_run == best_run) & just_cooled
+    if np.any(matched_best):
+        # record best run start/end for these nodes as well
+        idxs = np.where(matched_best)
+        # compute starts: t_idx - best_run + 1
+        starts = t_idx - best_run[idxs] + 1
+        best_run_end[idxs] = t_idx
+        best_run_start[idxs] = starts
     tam_end_time[matched_best] = t_idx
     in_cooling[matched_best] = True
     # Reset SCR tracking
@@ -260,21 +342,42 @@ for t_idx, f in enumerate(files):
                     time_at_1423[j_global, i_global] = t_idx
                     scr_computed[j_global, i_global] = True  # Mark as done
 
-# Convert runs to time (seconds)
-max_time = best_run.astype(np.float32) * dt
+# Convert runs to time (seconds) using variable dt
+max_time = np.zeros((Ny_global, Nx_global), dtype=np.float32)
+for j in range(Ny_global):
+    for i in range(Nx_global):
+        start = best_run_start[j, i]
+        end = best_run_end[j, i]
+        if start >= 0 and end >= start:
+            max_time[j, i] = np.sum(dt_array[start:end+1])
+
+# Find minimum observed TAM for error value calculation (positive values only)
+tam_positive_values = max_time[max_time > 0]
+if len(tam_positive_values) > 0:
+    min_observed_tam = np.min(tam_positive_values)
+    print(f"\n  Minimum observed TAM (positive): {min_observed_tam:.6e} s")
+else:
+    min_observed_tam = 1e-6  # Fallback if no positive TAM computed
+    print(f"\n  No positive TAM computed, using fallback value")
 
 # ----------------------------------------------------------
 # Compute SCR values
 # ----------------------------------------------------------
 print("\n=== Computing final SCR values ===")
 
-# Initialize SCR array with placeholder value
 scr_array = np.full((Ny_global, Nx_global), 0.0, dtype=np.float32)
 
 # Case 1: SCR computed successfully (reached both 1533K and 1423K)
 valid_scr = reached_1533 & reached_1423
-time_diff = (time_at_1423[valid_scr] - time_at_1533[valid_scr]) * dt
-scr_array[valid_scr] = 110.0 / time_diff  # K/s
+scr_time_diff = np.zeros_like(scr_array)
+for j in range(Ny_global):
+    for i in range(Nx_global):
+        if valid_scr[j, i]:
+            t1 = time_at_1533[j, i]
+            t2 = time_at_1423[j, i]
+            if t1 >= 0 and t2 > t1:
+                scr_time_diff[j, i] = cum_time[t2] - cum_time[t1]
+                scr_array[j, i] = 110.0 / scr_time_diff[j, i] if scr_time_diff[j, i] > 0 else 0.0
 
 # Find minimum observed SCR for error value calculation
 if np.any(valid_scr):
@@ -284,17 +387,17 @@ else:
     min_observed_scr = 1.0  # Fallback if no valid SCR computed
     print(f"  No valid SCR computed, using fallback value")
 
-# Case 2: Had a TAM but never reached 1533K (shouldn't happen)
-had_tam = (best_run > 0)
+# Case 2: Had a positive TAM but never reached 1533K -> use min_tam / 1.1
+had_tam = (max_time > 0)
 case_2 = had_tam & (~reached_1533)
-scr_array[case_2] = min_observed_scr / 1.2
+scr_array[case_2] = min_observed_tam / 1.1
 
-# Case 3: Reached 1533K but never reached 1423K (shouldn't happen)
+# Case 3: Reached 1533K but never reached 1423K -> use min_tam / 1.2
 case_1 = reached_1533 & (~reached_1423)
-scr_array[case_1] = min_observed_scr / 1.5
+scr_array[case_1] = min_observed_tam / 1.2
 
-# Case 4: Never had a TAM (never got hot enough) -> -1e7
-scr_array[~had_tam] = -1e7
+# Case 4: Never had a TAM (never got hot enough) -> -1e6
+scr_array[~had_tam] = -1e6
 
 num_valid = np.sum(valid_scr)
 num_case1 = np.sum(case_1)
@@ -302,9 +405,9 @@ num_case2 = np.sum(case_2)
 num_no_tam = np.sum(~had_tam)
 
 print(f"  Valid SCR computed: {num_valid} nodes")
-print(f"  Reached 1533K but not 1423K: {num_case1} nodes (SCR = {min_observed_scr/1.5:.2f})")
-print(f"  Had TAM but never reached 1533K: {num_case2} nodes (SCR = {min_observed_scr/1.2:.2f})")
-print(f"  Never experienced TAM: {num_no_tam} nodes (SCR = -1e7)")
+print(f"  Reached 1533K but not 1423K: {num_case1} nodes (SCR = {min_observed_tam / 1.5:.6e})")
+print(f"  Had TAM but never reached 1533K: {num_case2} nodes (SCR = {min_observed_tam / 1.2:.6e})")
+print(f"  Never experienced TAM: {num_no_tam} nodes (SCR = -1e6)")
 
 # ----------------------------------------------------------
 # Compute statistics for TAM and SCR
@@ -362,9 +465,10 @@ with open(output_txt_stats, 'w') as f:
     f.write("SCR Node Counts by Case:\n")
     f.write("-" * 60 + "\n")
     f.write(f"  Valid SCR (1533K→1423K): {num_valid}\n")
-    f.write(f"  Had TAM, never reached 1533K (min/1.2): {num_case2}\n")
-    f.write(f"  Reached 1533K, never reached 1423K (min/1.5): {num_case1}\n")
-    f.write(f"  Never experienced TAM (-1e7): {num_no_tam}\n\n")
+    f.write(f"  Had TAM, never reached 1533K (min_TAM/1.1): {num_case2}\n")
+    f.write(f"  Reached 1533K, never reached 1423K (min_TAM/1.2): {num_case1}\n")
+    f.write(f"  Never experienced TAM (-1e6): {num_no_tam}\n\n")
+    f.write(f"  Minimum observed TAM used for error values: {min_observed_tam:.6e} s\n\n")
     f.write("=" * 60 + "\n")
     f.write(f"Data Directory: {data_dir}\n")
     f.write(f"Melt Temperature: {melt_T} K\n")
@@ -425,10 +529,9 @@ plt.imshow(
 plt.colorbar(label="Solidus Cooling Rate (K/s)")
 plt.xlabel("X coordinate")
 plt.ylabel("Y coordinate")
-plt.title("Solidus Cooling Rate (1533K → 1423K)\n(-1e7: No TAM, min/1.2: No 1533K, min/1.5: No 1423K)")
+plt.title("Solidus Cooling Rate (1533K → 1423K)\n(-1e6: No TAM, min_TAM/1.1: No 1533K, min_TAM/1.2: No 1423K)")
 plt.savefig(output_png_SCR, dpi=300, bbox_inches="tight")
 print(f"Saved PNG: {output_png_SCR}")
 plt.close()
 
 print("\n=== All done ===")
-
