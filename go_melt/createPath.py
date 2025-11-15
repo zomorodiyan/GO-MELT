@@ -5,11 +5,12 @@ from computeFunctions import *
 
 def parsingGcode(Nonmesh, Properties, L2h):
     # Dwell timestep multiplier
-    dwell_t_coef = float(
-        Nonmesh["dwell_time_multiplier"]
-        * Nonmesh["subcycle_num_L2"]
-        * Nonmesh["subcycle_num_L3"]
-    )
+    # dwell_t_coef = float(
+    #     Nonmesh["dwell_time_multiplier"]
+    #     * Nonmesh["subcycle_num_L2"]
+    #     * Nonmesh["subcycle_num_L3"]
+    # )
+    dwell_t_coef = 1  # Disabled: keep timestep constant during dwell
     # number of timesteps to wait before larger Nonmesh['timestep_L3'] in dwell time
     dwell_t = max(
         Nonmesh["dwell_time"] - Nonmesh["wait_time"] * Nonmesh["timestep_L3"],
