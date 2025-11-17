@@ -113,7 +113,7 @@
     },
     "nonmesh": {
         "timestep_L3": 0.25e-05,
-        "dwell_time": 0.003,
+        "dwell_time": 0.005,
         "wait_time": 200,
         "output_files": 1,
         "record_step": 10,

@@ -112,7 +112,7 @@
         "layer_height": 0.04
     },
     "nonmesh": {
-        "timestep_L3": 0.25e-05,
+        "timestep_L3": 0.16e-05,
         "dwell_time": 0.01,
         "wait_time": 200,
         "output_files": 1,
@@ -124,7 +124,7 @@
         "gcode": "./examples/gcodefiles/rectangle_tracks.gcode",
         "toolpath": "./results/25rectangleSlow/toolpath.txt",
         "layer_num": 0,
-        "subcycle_num_L2": 5,
+        "subcycle_num_L2": 2,
         "subcycle_num_L3": 5,
         "info_T": 1,
         "dwell_time_multiplier": 8,
