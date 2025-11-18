@@ -112,7 +112,7 @@
         "layer_height": 0.04
     },
     "nonmesh": {
-        "timestep_L3": 0.25e-03,
+        "timestep_L3": 0.25e-05,
         "dwell_time": 0.005,
         "wait_time": 200,
         "output_files": 1,
