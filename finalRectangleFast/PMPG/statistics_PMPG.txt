@@ -6,7 +6,7 @@ SUMMARY STATISTICS
 ----------------------------------------------------------------------
 Average Depth (Valley):        129.66 μm
 Average Overlap Depth (Peak):  120.28 μm
-Average Track Width:           320.21 μm
+Average Track Width:           320.43 μm
 
 ======================================================================
 
@@ -135,27 +135,7 @@ Track  21:    357.74 μm
 Track  22:    348.60 μm
 Track  23:    352.43 μm
 Track  24:    349.77 μm
-Track  25:    343.99 μm
-Track  26:    349.60 μm
-Track  27:    350.43 μm
-Track  28:    347.99 μm
-Track  29:    349.60 μm
-Track  30:    353.43 μm
-Track  31:    349.77 μm
-Track  32:    344.99 μm
-Track  33:    349.77 μm
-Track  34:    347.99 μm
-Track  35:    351.20 μm
-Track  36:    352.73 μm
-Track  37:    346.03 μm
-Track  38:    348.59 μm
-Track  39:    349.67 μm
-Track  40:    347.79 μm
-Track  41:    351.20 μm
-Track  42:    353.93 μm
-Track  43:    349.37 μm
-Track  44:    351.12 μm
-Track  45:    348.69 μm
+Track  25:    247.52 μm
 
 ======================================================================
 Cross-section location: X = 3.060 mm
