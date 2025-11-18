@@ -1,0 +1,45 @@
+{
+    "mesh_statistics": {
+        "level_1_node_count": 622261,
+        "level_2_node_count": 848421,
+        "level_3_node_count": 3194271,
+        "level_4_node_count_heat_source": 24576000,
+        "total_node_count": 4664953,
+        "level_0_node_count": 41082041,
+        "domain_size_mm": {
+            "x_len_mm": 10.0,
+            "y_len_mm": 10.0,
+            "z_len_mm": 6.0
+        },
+        "cell_size_um": 10.0,
+        "timestep_L3_seconds": 2.5e-06
+    },
+    "memory_usage": {
+        "max_gpu_memory_mb": 36247.0,
+        "min_gpu_memory_mb": 4322.0,
+        "memory_usage_mb": 31925.0,
+        "note": "Maximum GPU memory - Minimum GPU memory during run (after warmup)"
+    },
+    "execution_time": {
+        "total_execution_time_seconds": 6870.251122713089,
+        "total_execution_time_hours": 1.9084030896425248,
+        "total_steps": 105965,
+        "time_after_warmup_seconds": 6815.472393274307,
+        "steps_after_warmup": 10587
+    },
+    "computational_efficiency": {
+        "avg_computation_time_per_timestep_seconds": 0.19968319531483342,
+        "avg_computation_time_per_timestep_ms": 199.68319531483343,
+        "warmup_steps_excluded": 100,
+        "computation_time_per_sim_s_seconds": 79873.27812593336,
+        "preferred_unit": "seconds per simulated second",
+        "computation_time_per_sim_ms_seconds": 79.87327812593337,
+        "speedup_factor": 1.2519831706710916e-05,
+        "speedup_note": "Positive values > 1 mean faster than real-time, < 1 means slower than real-time"
+    },
+    "metadata": {
+        "warmup_steps": 100,
+        "note": "All computational efficiency metrics calculated after warmup period",
+        "generated_at": "2025-11-18 01:11:35"
+    }
+}
