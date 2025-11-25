@@ -57,21 +57,21 @@
     },
     "Level3": {
         "elements": [
-            100,
-            100,
-            10
+            160,
+            160,
+            15
         ],
         "bounds": {
             "x": [
-                1.6,
-                3.6
+                1.0,
+                4.2
             ],
             "y": [
-                1.6,
-                3.6
+                1.0,
+                4.2
             ],
             "z": [
-                -0.2,
+                -0.3,
                 0.0
             ]
         }
@@ -113,21 +113,21 @@
     },
     "nonmesh": {
         "timestep_L3": 1e-05,
-        "dwell_time": 1.0,
+        "dwell_time": 0.03,
         "wait_time": 200,
         "output_files": 1,
-        "record_step": 25,
+        "record_step": 2,
         "Level1_record_step": 1,
         "laser_velocity": 960,
         "g0_velocity": 22,
-        "save_path": "./results/rectangle-slow/",
+        "save_path": "./results/rectangleSlow/",
         "gcode": "./examples/gcodefiles/rectangle_tracks.gcode",
-        "toolpath": "./results/rectangle-slow/toolpath.txt",
+        "toolpath": "./results/rectangleSlow/toolpath.txt",
         "layer_num": 0,
-        "subcycle_num_L2": 5,
-        "subcycle_num_L3": 5,
+        "subcycle_num_L2": 1,
+        "subcycle_num_L3": 2,
         "info_T": 1,
-        "dwell_time_multiplier": 8,
+        "dwell_time_multiplier": 1,
         "use_txt": 0
     }
 }

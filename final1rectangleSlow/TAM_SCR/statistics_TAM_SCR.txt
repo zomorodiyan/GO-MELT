@@ -3,31 +3,31 @@ TAM and SCR Statistics
 
 TAM (Time Above Melt) Statistics (values > 0):
 ------------------------------------------------------------
-  Mean:         9.588265e-04 s
-  Median:       9.923575e-04 s
-  Std Dev:      1.563118e-04 s
-  Node Count:   242669
-  Total Nodes:  648025
+  Mean:         8.903506e-04 s
+  Median:       9.585817e-04 s
+  Std Dev:      2.381793e-04 s
+  Node Count:   10925
+  Total Nodes:  49049
 
 SCR (Solidus Cooling Rate) Statistics (values > 0):
 ------------------------------------------------------------
-  Mean:         4.065742e+05 K/s
-  Median:       3.645420e+05 K/s
-  Std Dev:      1.554515e+05 K/s
-  Node Count:   242669
-  Total Nodes:  648025
+  Mean:         5.006819e+05 K/s
+  Median:       4.129343e+05 K/s
+  Std Dev:      2.055188e+05 K/s
+  Node Count:   10925
+  Total Nodes:  49049
 
 SCR Node Counts by Case:
 ------------------------------------------------------------
-  Valid SCR (1533K→1423K): 242669
+  Valid SCR (1533K→1423K): 10925
   Had TAM, never reached 1533K (min_TAM/1.1): 0
   Reached 1533K, never reached 1423K (min_TAM/1.2): 0
-  Never experienced TAM (-1e6): 405356
+  Never experienced TAM (-1e6): 38124
 
-  Minimum observed TAM used for error values: 2.286193e-07 s
+  Minimum observed TAM used for error values: 7.479606e-06 s
 
 ============================================================
-Data Directory: results/2squareSlow
+Data Directory: results/rectangleSlow
 Melt Temperature: 1570.0 K
 Solidus Temperature: 1533.0 K
 Solidus Low Temperature: 1423.0 K
